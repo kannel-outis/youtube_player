@@ -12,41 +12,41 @@ typedef YoutubeQualityChangeCallback(String quality, Duration position);
 typedef ControlsShowingCallback(bool showing);
 
 class Controls extends StatefulWidget {
-  final bool showControls;
-  final double width;
-  final double height;
+  final bool? showControls;
+  final double? width;
+  final double? height;
   final String videoId;
   final String defaultQuality;
-  final bool defaultCall;
-  final YoutubeQualityChangeCallback qualityChangeCallback;
+  final bool? defaultCall;
+  final YoutubeQualityChangeCallback? qualityChangeCallback;
   final VideoPlayerController controller;
-  final VoidCallback fullScreenCallback;
+  final VoidCallback? fullScreenCallback;
   final bool isFullScreen;
-  final ControlsShowingCallback controlsShowingCallback;
-  final ControlsColor controlsColor;
-  final bool controlsActiveBackgroundOverlay;
-  final Duration controlsTimeOut;
-  final bool isLive;
+  final ControlsShowingCallback? controlsShowingCallback;
+  final ControlsColor? controlsColor;
+  final bool? controlsActiveBackgroundOverlay;
+  final Duration? controlsTimeOut;
+  final bool? isLive;
   final bool switchFullScreenOnLongPress;
-  final bool hideShareButton;
+  final bool? hideShareButton;
 
   Controls({
     this.isLive,
     this.showControls,
-    this.controller,
+    required this.controller,
     this.height,
     this.width,
     this.qualityChangeCallback,
-    this.videoId,
+    required this.videoId,
     this.defaultCall,
-    this.defaultQuality,
+    required this.defaultQuality,
     this.fullScreenCallback,
     this.controlsShowingCallback,
     this.isFullScreen = false,
     this.controlsColor,
     this.controlsActiveBackgroundOverlay,
     this.controlsTimeOut,
-    this.switchFullScreenOnLongPress,
+    required this.switchFullScreenOnLongPress,
     this.hideShareButton,
   });
 
@@ -55,13 +55,13 @@ class Controls extends StatefulWidget {
 }
 
 class _ControlsState extends State<Controls> {
-  bool _showControls;
+  late bool? _showControls;
   double currentPosition = 0;
   String _currentPositionString = "00:00";
   String _remainingString = "- 00:00";
-  String _selectedQuality;
+  late String _selectedQuality;
   bool _buffering = false;
-  Timer _timer;
+  Timer? _timer;
   bool _showFast = false;
   bool _showRewind = false;
   int seekCount = 0;
@@ -77,27 +77,26 @@ class _ControlsState extends State<Controls> {
     }
     widget.controller.addListener(listener);
     _showControls = widget.showControls;
-    widget.controlsShowingCallback(_showControls);
+    widget.controlsShowingCallback!(_showControls ?? false);
     super.initState();
   }
 
   listener() {
-    if (widget.controller.value != null) {
-      if (widget.controller.value.position != null &&
-          widget.controller.value.duration != null) {
-        if (mounted && widget.controller.value.isPlaying) {
-          setState(() {
-            currentPosition =
-                (widget.controller.value.position.inSeconds ?? 0) /
-                    widget.controller.value.duration.inSeconds;
-            _buffering = widget.controller.value.isBuffering;
-            _currentPositionString =
-                formatDuration(widget.controller.value.position);
-            _remainingString = "- " +
-                formatDuration(widget.controller.value.duration -
-                    widget.controller.value.position);
-          });
-        }
+    if (widget.controller.value.position != null &&
+        widget.controller.value.duration != null) {
+      if (mounted && widget.controller.value.isPlaying!) {
+        setState(() {
+          currentPosition = (widget.controller.value.position == null
+                  ? 0
+                  : widget.controller.value.position!.inSeconds) /
+              widget.controller.value.duration!.inSeconds;
+          _buffering = widget.controller.value.isBuffering!;
+          _currentPositionString = formatDuration(
+              widget.controller.value.position ?? const Duration());
+          _remainingString = "- " +
+              formatDuration(widget.controller.value.duration! -
+                  widget.controller.value.position!);
+        });
       }
     }
   }
@@ -118,7 +117,7 @@ class _ControlsState extends State<Controls> {
   @override
   void dispose() {
     if (!widget.isFullScreen) {
-      widget.controller?.setVolume(0);
+      widget.controller.setVolume(0);
     }
     super.dispose();
   }
@@ -128,7 +127,7 @@ class _ControlsState extends State<Controls> {
     if (widget.isFullScreen) YoutubePlayer.keepOn(true);
     return Stack(
       children: <Widget>[
-        _showControls
+        _showControls == true
             ? Container(
                 color: Color(0x88000000),
                 height: widget.height,
@@ -140,7 +139,7 @@ class _ControlsState extends State<Controls> {
             if (widget.switchFullScreenOnLongPress)
               widget.isFullScreen
                   ? Navigator.pop(context)
-                  : widget.fullScreenCallback();
+                  : widget.fullScreenCallback!();
           },
           onTap: onTapAction,
           child: AnimatedContainer(
@@ -149,7 +148,7 @@ class _ControlsState extends State<Controls> {
             height: widget.height,
             width: widget.width,
             child: AnimatedOpacity(
-              opacity: _showControls ? 1.0 : 0.0,
+              opacity: _showControls == true ? 1.0 : 0.0,
               duration: Duration(seconds: 1),
               child: AnimatedContainer(
                 width: widget.width,
@@ -170,8 +169,8 @@ class _ControlsState extends State<Controls> {
             ),
           ),
         ),
-        _fastForward(widget.height, widget.width),
-        _rewind(widget.height, widget.width),
+        _fastForward(widget.height!, widget.width!),
+        _rewind(widget.height!, widget.width!),
       ],
     );
   }
@@ -190,7 +189,7 @@ class _ControlsState extends State<Controls> {
             });
             widget.controller.seekTo(
               Duration(
-                  seconds: widget.controller.value.position.inSeconds + 10),
+                  seconds: widget.controller.value.position!.inSeconds + 10),
             );
             Timer(Duration(seconds: 2), () {
               if (mounted) {
@@ -242,7 +241,7 @@ class _ControlsState extends State<Controls> {
             });
             widget.controller.seekTo(
               Duration(
-                  seconds: widget.controller.value.position.inSeconds - 10),
+                  seconds: widget.controller.value.position!.inSeconds - 10),
             );
             Timer(Duration(seconds: 2), () {
               if (mounted) {
@@ -282,32 +281,32 @@ class _ControlsState extends State<Controls> {
   }
 
   void onTapAction() {
-    if (_timer != null) _timer.cancel();
+    if (_timer != null) _timer?.cancel();
     if (mounted) {
       setState(() {
-        _showControls = !_showControls;
-        widget.controlsShowingCallback(_showControls);
+        _showControls = _showControls != true;
+        widget.controlsShowingCallback!(_showControls!);
       });
     }
-    if (_showControls) {
-      _timer = Timer(widget.controlsTimeOut, () {
+    if (_showControls!) {
+      _timer = Timer(widget.controlsTimeOut!, () {
         if (mounted) {
           setState(() {
             _showControls = false;
-            widget.controlsShowingCallback(_showControls);
+            widget.controlsShowingCallback!(_showControls!);
           });
         }
       });
     }
-    if (!widget.controller.value.isPlaying) widget.controller.play();
+    if (widget.controller.value.isPlaying != true) widget.controller.play();
   }
 
   Widget _playButton() {
     return IgnorePointer(
-      ignoring: !_showControls,
+      ignoring: _showControls != true,
       child: Material(
         borderRadius: BorderRadius.circular(100.0),
-        color: widget.controlsColor.controlsBackgroundColor,
+        color: widget.controlsColor!.controlsBackgroundColor,
         child: InkWell(
           splashColor: Colors.grey[350],
           borderRadius: BorderRadius.circular(100.0),
@@ -315,7 +314,7 @@ class _ControlsState extends State<Controls> {
             if (mounted) {
               setState(() {
                 _showControls = false;
-                widget.controlsShowingCallback(_showControls);
+                widget.controlsShowingCallback!(_showControls!);
               });
             }
             if (!_buffering) {
@@ -325,11 +324,11 @@ class _ControlsState extends State<Controls> {
           child: _buffering
               ? CircularProgressIndicator()
               : Icon(
-                  widget.controller.value.isPlaying
+                  widget.controller.value.isPlaying == true
                       ? Icons.pause
                       : Icons.play_arrow,
-                  color: widget.controlsColor.playPauseColor,
-                  size: widget.width * 0.15,
+                  color: widget.controlsColor!.playPauseColor,
+                  size: widget.width! * 0.15,
                 ),
         ),
       ),
@@ -342,15 +341,15 @@ class _ControlsState extends State<Controls> {
       right: 0,
       child: Row(
         children: <Widget>[
-          widget.isLive
+          widget.isLive == true
               ? Icon(
                   Icons.wifi_tethering,
-                  color: widget.controlsColor.seekBarPlayedColor,
+                  color: widget.controlsColor!.seekBarPlayedColor,
                 )
               : InkWell(
                   onTap: () {
                     if (widget.isFullScreen) {
-                      Scaffold.of(context).showSnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
                               "Quality cannot be changed in fullscreen mode."),
@@ -369,19 +368,19 @@ class _ControlsState extends State<Controls> {
                     child: Text(
                       _selectedQuality,
                       style: TextStyle(
-                        color: widget.controlsColor.buttonColor,
+                        color: widget.controlsColor!.buttonColor,
                         fontWeight: FontWeight.w900,
                         fontSize: widget.isFullScreen ? 22 : 16,
                       ),
                     ),
                   ),
                 ),
-          widget.hideShareButton
+          widget.hideShareButton == true
               ? Container()
               : IconButton(
                   icon: Icon(
                     Icons.share,
-                    color: widget.controlsColor.buttonColor,
+                    color: widget.controlsColor!.buttonColor,
                   ),
                   onPressed: shareVideo,
                 ),
@@ -391,24 +390,26 @@ class _ControlsState extends State<Controls> {
   }
 
   Widget _buildBottomControls() {
-    int totalLength = widget.controller.value.duration.inSeconds ?? 0;
+    int totalLength = widget.controller.value.duration == null
+        ? 0
+        : widget.controller.value.duration!.inSeconds;
     return Positioned(
       bottom: 0.0,
       child: Container(
-        color: widget.controlsColor.controlsBackgroundColor,
+        color: widget.controlsColor!.controlsBackgroundColor,
         width: widget.width,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            widget.isLive
+            widget.isLive == true
                 ? Container()
                 : Padding(
                     padding: const EdgeInsets.only(left: 10.0),
                     child: Text(
                       _currentPositionString,
                       style: TextStyle(
-                          color: widget.controlsColor.timerColor,
+                          color: widget.controlsColor!.timerColor,
                           fontSize: 12.0),
                     ),
                   ),
@@ -416,8 +417,8 @@ class _ControlsState extends State<Controls> {
               child: Container(
                 height: 20,
                 child: Slider(
-                  activeColor: widget.controlsColor.seekBarPlayedColor,
-                  inactiveColor: widget.controlsColor.seekBarUnPlayedColor,
+                  activeColor: widget.controlsColor!.seekBarPlayedColor,
+                  inactiveColor: widget.controlsColor!.seekBarUnPlayedColor,
                   value: currentPosition,
                   onChanged: (position) {
                     if (mounted) {
@@ -435,39 +436,39 @@ class _ControlsState extends State<Controls> {
                 ),
               ),
             ),
-            widget.isLive
+            widget.isLive == true
                 ? Container()
                 : Text(
                     _remainingString,
                     style: TextStyle(
-                      color: widget.controlsColor.timerColor,
+                      color: widget.controlsColor!.timerColor,
                       fontSize: 12.0,
                     ),
                   ),
-            widget.isLive
+            widget.isLive == true
                 ? Text(
                     "LIVE",
                     style: TextStyle(
-                      color: widget.controlsColor.timerColor,
+                      color: widget.controlsColor!.timerColor,
                       fontSize: 12.0,
                       fontWeight: FontWeight.bold,
                     ),
                   )
                 : Container(),
             Padding(
-              padding: EdgeInsets.all(widget.width <= 200 ? 4.0 : 10.0),
+              padding: EdgeInsets.all(widget.width! <= 200 ? 4.0 : 10.0),
               child: InkWell(
                 splashColor: Colors.grey[350],
                 onTap: () {
                   widget.isFullScreen
                       ? Navigator.pop(context)
-                      : widget.fullScreenCallback();
+                      : widget.fullScreenCallback!();
                 },
                 child: Icon(
                   widget.isFullScreen
                       ? Icons.fullscreen_exit
                       : Icons.fullscreen,
-                  color: widget.controlsColor.buttonColor,
+                  color: widget.controlsColor!.buttonColor,
                 ),
               ),
             ),
@@ -483,7 +484,7 @@ class _ControlsState extends State<Controls> {
       if (mounted) {
         setState(() {
           _showControls = true;
-          widget.controlsShowingCallback(_showControls);
+          widget.controlsShowingCallback!(_showControls!);
         });
       }
     } else {
@@ -492,7 +493,7 @@ class _ControlsState extends State<Controls> {
   }
 
   void shareVideo() {
-    final RenderBox box = context.findRenderObject();
+    final RenderBox box = context.findRenderObject() as RenderBox;
     Share.share("https://youtu.be/${widget.videoId}",
         sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
   }
@@ -529,9 +530,9 @@ class _ControlsState extends State<Controls> {
     }
     return InkWell(
       onTap: () {
-        widget.qualityChangeCallback(
+        widget.qualityChangeCallback!(
           quality.toLowerCase(),
-          widget.controller.value.position,
+          widget.controller.value.position ?? const Duration(),
         );
         Navigator.pop(context);
       },
@@ -564,11 +565,21 @@ class _ControlsState extends State<Controls> {
     seconds = seconds % 3600;
     var minutes = seconds ~/ 60;
     seconds = seconds % 60;
-    final hoursString = hours >= 10 ? '$hours' : hours == 0 ? '00' : '0$hours';
-    final minutesString =
-        minutes >= 10 ? '$minutes' : minutes == 0 ? '00' : '0$minutes';
-    final secondsString =
-        seconds >= 10 ? '$seconds' : seconds == 0 ? '00' : '0$seconds';
+    final hoursString = hours >= 10
+        ? '$hours'
+        : hours == 0
+            ? '00'
+            : '0$hours';
+    final minutesString = minutes >= 10
+        ? '$minutes'
+        : minutes == 0
+            ? '00'
+            : '0$minutes';
+    final secondsString = seconds >= 10
+        ? '$seconds'
+        : seconds == 0
+            ? '00'
+            : '0$seconds';
     final formattedTime =
         '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';
     return formattedTime;

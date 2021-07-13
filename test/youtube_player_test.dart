@@ -15,16 +15,16 @@ class FakeController extends ValueNotifier<VideoPlayerValue>
   }
 
   @override
-  int textureId;
+  int textureId = 0;
 
   @override
   String get dataSource => '';
   @override
   DataSourceType get dataSourceType => DataSourceType.file;
   @override
-  String get package => null;
+  String? get package => null;
   @override
-  Future<Duration> get position async => value.position;
+  Future<Duration> get position async => value.position!;
 
   @override
   Future<void> seekTo(Duration moment) async {}
@@ -88,7 +88,7 @@ void main() {
 }
 
 class YoutubePlayerTest extends StatefulWidget {
-  const YoutubePlayerTest({Key key}) : super(key: key);
+  const YoutubePlayerTest({Key? key}) : super(key: key);
   @override
   _YoutubePlayerTestState createState() => _YoutubePlayerTestState();
 }
@@ -97,7 +97,7 @@ class _YoutubePlayerTestState extends State<YoutubePlayerTest> {
   TextEditingController _idController = TextEditingController();
   TextEditingController _seekToController = TextEditingController();
   TextEditingController _volumeController = TextEditingController();
-  VideoPlayerController _videoController;
+  VideoPlayerController? _videoController;
   String position = "Get Current Position";
   String status = "Get Player Status";
   String videoDuration = "Get Video Duration";
@@ -192,19 +192,19 @@ class _YoutubePlayerTestState extends State<YoutubePlayerTest> {
                       children: <Widget>[
                         IconButton(
                           icon: Icon(Icons.play_arrow),
-                          onPressed: () => _videoController.value.isPlaying
+                          onPressed: () => _videoController!.value.isPlaying!
                               ? null
-                              : _videoController.play(),
+                              : _videoController!.play(),
                         ),
                         IconButton(
                           icon: Icon(Icons.pause),
-                          onPressed: () => _videoController.pause(),
+                          onPressed: () => _videoController!.pause(),
                         ),
                         IconButton(
                           icon:
                               Icon(isMute ? Icons.volume_off : Icons.volume_up),
                           onPressed: () {
-                            _videoController.setVolume(isMute ? 1 : 0);
+                            _videoController!.setVolume(isMute ? 1 : 0);
                             setState(
                               () {
                                 isMute = !isMute;
@@ -227,8 +227,10 @@ class _YoutubePlayerTestState extends State<YoutubePlayerTest> {
                           padding: EdgeInsets.all(5.0),
                           child: OutlineButton(
                               child: Text("Seek"),
-                              onPressed: () => _videoController.seekTo(Duration(
-                                  seconds: int.parse(_seekToController.text)))),
+                              onPressed: () => _videoController!.seekTo(
+                                  Duration(
+                                      seconds:
+                                          int.parse(_seekToController.text)))),
                         ),
                       ),
                     ),
@@ -245,32 +247,31 @@ class _YoutubePlayerTestState extends State<YoutubePlayerTest> {
                           padding: EdgeInsets.all(5.0),
                           child: OutlineButton(
                               child: Text("Adjust"),
-                              onPressed: () => _videoController.setVolume(
+                              onPressed: () => _videoController!.setVolume(
                                   double.parse(_volumeController.text) / 10)),
                         ),
                       ),
                     ),
                     OutlineButton(
                       child: Text(position),
-                      onPressed: () => _videoController.position.then(
-                            (currentPosition) {
-                              setState(
-                                () {
-                                  position =
-                                      currentPosition.inSeconds.toString() +
-                                          " th second";
-                                },
-                              );
+                      onPressed: () => _videoController!.position.then(
+                        (currentPosition) {
+                          setState(
+                            () {
+                              position = currentPosition!.inSeconds.toString() +
+                                  " th second";
                             },
-                          ),
+                          );
+                        },
+                      ),
                     ),
                     OutlineButton(
                       child: Text(videoDuration),
                       onPressed: () {
                         setState(
                           () {
-                            videoDuration = _videoController
-                                    .value.duration.inSeconds
+                            videoDuration = _videoController!
+                                    .value.duration!.inSeconds
                                     .toString() +
                                 " seconds";
                           },
@@ -281,7 +282,7 @@ class _YoutubePlayerTestState extends State<YoutubePlayerTest> {
                         child: Text(status),
                         onPressed: () {
                           setState(() {
-                            _videoController.value.isPlaying
+                            _videoController!.value.isPlaying!
                                 ? status = "Playing"
                                 : status = "Paused";
                           });

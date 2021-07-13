@@ -22,9 +22,9 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key? key, this.title}) : super(key: key);
 
-  final String title;
+  final String? title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _idController = TextEditingController();
   TextEditingController _seekToController = TextEditingController();
   double _volume = 1.0;
-  VideoPlayerController _videoController;
+  late VideoPlayerController _videoController;
   String position = "Get Current Position";
   String status = "Get Player Status";
   String videoDuration = "Get Video Duration";
@@ -52,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title!),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -122,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: <Widget>[
                       IconButton(
                         icon: Icon(Icons.play_arrow),
-                        onPressed: () => _videoController.value.isPlaying
+                        onPressed: () => _videoController.value.isPlaying!
                             ? null
                             : _videoController.play(),
                       ),
@@ -191,16 +191,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   OutlineButton(
                     child: Text(position),
                     onPressed: () => _videoController.position.then(
-                          (currentPosition) {
-                            setState(
-                              () {
-                                position =
-                                    currentPosition.inSeconds.toString() +
-                                        " th second";
-                              },
-                            );
+                      (currentPosition) {
+                        setState(
+                          () {
+                            position = currentPosition!.inSeconds.toString() +
+                                " th second";
                           },
-                        ),
+                        );
+                      },
+                    ),
                   ),
                   OutlineButton(
                     child: Text(videoDuration),
@@ -208,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       setState(
                         () {
                           videoDuration = _videoController
-                                  .value.duration.inSeconds
+                                  .value.duration!.inSeconds
                                   .toString() +
                               " seconds";
                         },
@@ -219,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text(status),
                     onPressed: () {
                       setState(() {
-                        _videoController.value.isPlaying
+                        _videoController.value.isPlaying!
                             ? status = "Playing"
                             : status = "Paused";
                       });

@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 import java.nio.ByteBuffer;
 
-import io.flutter.app.FlutterActivity;
+import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.plugin.common.ActivityLifecycleListener;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;

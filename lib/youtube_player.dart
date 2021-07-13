@@ -63,7 +63,7 @@ class DurationRange {
 /// of a [VideoPlayerController].
 class VideoPlayerValue {
   VideoPlayerValue({
-    @required this.duration,
+    required this.duration,
     this.size,
     this.position = const Duration(),
     this.buffered = const <DurationRange>[],
@@ -82,52 +82,52 @@ class VideoPlayerValue {
   /// The total duration of the video.
   ///
   /// Is null when [initialized] is false.
-  final Duration duration;
+  final Duration? duration;
 
   /// The current playback position.
-  final Duration position;
+  final Duration? position;
 
   /// The currently buffered ranges.
-  final List<DurationRange> buffered;
+  final List<DurationRange>? buffered;
 
   /// True if the video is playing. False if it's paused.
-  final bool isPlaying;
+  final bool? isPlaying;
 
   /// True if the video is looping.
-  final bool isLooping;
+  final bool? isLooping;
 
   /// True if the video is currently buffering.
-  final bool isBuffering;
+  final bool? isBuffering;
 
   /// The current volume of the playback.
-  final double volume;
+  final double? volume;
 
   /// A description of the error if present.
   ///
   /// If [hasError] is false this is [null].
-  final String errorDescription;
+  final String? errorDescription;
 
   /// The [size] of the currently loaded video.
   ///
   /// Is null when [initialized] is false.
-  final Size size;
+  final Size? size;
 
   bool get initialized => duration != null;
 
   bool get hasError => errorDescription != null;
 
-  double get aspectRatio => size != null ? size.width / size.height : 1.0;
+  double get aspectRatio => size != null ? size!.width / size!.height : 1.0;
 
   VideoPlayerValue copyWith({
-    Duration duration,
-    Size size,
-    Duration position,
-    List<DurationRange> buffered,
-    bool isPlaying,
-    bool isLooping,
-    bool isBuffering,
-    double volume,
-    String errorDescription,
+    Duration? duration,
+    Size? size,
+    Duration? position,
+    List<DurationRange>? buffered,
+    bool? isPlaying,
+    bool? isLooping,
+    bool? isBuffering,
+    double? volume,
+    String? errorDescription,
   }) {
     return VideoPlayerValue(
       duration: duration ?? this.duration,
@@ -148,7 +148,7 @@ class VideoPlayerValue {
         'duration: $duration, '
         'size: $size, '
         'position: $position, '
-        'buffered: [${buffered.join(', ')}], '
+        'buffered: [${buffered!.join(', ')}], '
         'isPlaying: $isPlaying, '
         'isLooping: $isLooping, '
         'isBuffering: $isBuffering'
@@ -199,19 +199,19 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         package = null,
         super(VideoPlayerValue(duration: null));
 
-  int _textureId;
-  final String dataSource;
+  late int _textureId;
+  final String? dataSource;
 
   /// Describes the type of data source this [VideoPlayerController]
   /// is constructed with.
-  final DataSourceType dataSourceType;
+  final DataSourceType? dataSourceType;
 
-  final String package;
-  Timer _timer;
+  final String? package;
+  late Timer _timer;
   bool _isDisposed = false;
-  Completer<void> _creatingCompleter;
-  StreamSubscription<dynamic> _eventSubscription;
-  _VideoAppLifeCycleObserver _lifeCycleObserver;
+  late Completer<void> _creatingCompleter;
+  late StreamSubscription<dynamic> _eventSubscription;
+  late _VideoAppLifeCycleObserver _lifeCycleObserver;
 
   @visibleForTesting
   int get textureId => _textureId;
@@ -220,8 +220,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _lifeCycleObserver = _VideoAppLifeCycleObserver(this);
     _lifeCycleObserver.initialize();
     _creatingCompleter = Completer<void>();
-    Map<dynamic, dynamic> dataSourceDescription;
-    switch (dataSourceType) {
+    Map<dynamic, dynamic>? dataSourceDescription;
+    switch (dataSourceType!) {
       case DataSourceType.asset:
         dataSourceDescription = <String, dynamic>{
           'asset': dataSource,
@@ -270,7 +270,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           break;
         case 'completed':
           value = value.copyWith(isPlaying: false, position: value.duration);
-          _timer?.cancel();
+          _timer.cancel();
           break;
         case 'bufferingUpdate':
           final List<dynamic> values = map['values'];
@@ -288,9 +288,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     void errorListener(Object obj) {
-      final PlatformException e = obj;
-      value = VideoPlayerValue.erroneous(e.message);
-      _timer?.cancel();
+      final PlatformException e = obj as PlatformException;
+      value = VideoPlayerValue.erroneous(e.message!);
+      _timer.cancel();
     }
 
     _eventSubscription = _eventChannelFor(_textureId)
@@ -306,22 +306,22 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   @override
   Future<void> dispose() async {
-    if (_creatingCompleter != null) {
-      await _creatingCompleter.future;
-      if (!_isDisposed) {
-        _isDisposed = true;
-        _timer?.cancel();
-        await _eventSubscription?.cancel();
-        // https://github.com/flutter/flutter/issues/26431
-        // ignore: strong_mode_implicit_dynamic_method
-        await _channel.invokeMethod(
-          'dispose',
-          <String, dynamic>{'textureId': _textureId},
-        );
-      }
-      _lifeCycleObserver.dispose();
+    // if (_creatingCompleter != null) {
+    await _creatingCompleter.future;
+    if (!_isDisposed) {
+      _isDisposed = true;
+      _timer.cancel();
+      await _eventSubscription.cancel();
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
+      await _channel.invokeMethod(
+        'dispose',
+        <String, dynamic>{'textureId': _textureId},
+      );
     }
-    _isDisposed = true;
+    _lifeCycleObserver.dispose();
+    // }
+    // _isDisposed = true;
     super.dispose();
   }
 
@@ -356,7 +356,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (!value.initialized || _isDisposed) {
       return;
     }
-    if (value.isPlaying) {
+    if (value.isPlaying!) {
       // https://github.com/flutter/flutter/issues/26431
       // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod(
@@ -369,7 +369,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           if (_isDisposed) {
             return;
           }
-          final Duration newPosition = await position;
+          final Duration? newPosition = await position;
           if (_isDisposed) {
             return;
           }
@@ -377,7 +377,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         },
       );
     } else {
-      _timer?.cancel();
+      _timer.cancel();
       // https://github.com/flutter/flutter/issues/26431
       // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod(
@@ -400,7 +400,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   /// The position in the current video.
-  Future<Duration> get position async {
+  Future<Duration?> get position async {
     if (_isDisposed) {
       return null;
     }
@@ -418,8 +418,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (_isDisposed) {
       return;
     }
-    if (moment > value.duration) {
-      moment = value.duration;
+    if (moment > value.duration!) {
+      moment = value.duration!;
     } else if (moment < const Duration()) {
       moment = const Duration();
     }
@@ -449,14 +449,14 @@ class _VideoAppLifeCycleObserver extends Object with WidgetsBindingObserver {
   final VideoPlayerController _controller;
 
   void initialize() {
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.paused:
-        _wasPlayingBeforePause = _controller.value.isPlaying;
+        _wasPlayingBeforePause = _controller.value.isPlaying!;
         _controller.pause();
         break;
       case AppLifecycleState.resumed:
@@ -469,7 +469,7 @@ class _VideoAppLifeCycleObserver extends Object with WidgetsBindingObserver {
   }
 
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance!.removeObserver(this);
   }
 }
 
@@ -495,8 +495,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
     };
   }
 
-  VoidCallback _listener;
-  int _textureId;
+  late VoidCallback _listener;
+  late int _textureId;
 
   @override
   void initState() {
@@ -541,8 +541,8 @@ class VideoProgressColors {
 
 class _VideoScrubber extends StatefulWidget {
   _VideoScrubber({
-    @required this.child,
-    @required this.controller,
+    required this.child,
+    required this.controller,
   });
 
   final Widget child;
@@ -560,10 +560,10 @@ class _VideoScrubberState extends State<_VideoScrubber> {
   @override
   Widget build(BuildContext context) {
     void seekToRelativePosition(Offset globalPosition) {
-      final RenderBox box = context.findRenderObject();
+      final RenderBox box = context.findRenderObject() as RenderBox;
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
-      final Duration position = controller.value.duration * relative;
+      final Duration position = controller.value.duration! * relative;
       controller.seekTo(position);
     }
 
@@ -574,7 +574,7 @@ class _VideoScrubberState extends State<_VideoScrubber> {
         if (!controller.value.initialized) {
           return;
         }
-        _controllerWasPlaying = controller.value.isPlaying;
+        _controllerWasPlaying = controller.value.isPlaying!;
         if (_controllerWasPlaying) {
           controller.pause();
         }
@@ -610,14 +610,14 @@ class _VideoScrubberState extends State<_VideoScrubber> {
 class VideoProgressIndicator extends StatefulWidget {
   VideoProgressIndicator(
     this.controller, {
-    VideoProgressColors colors,
+    VideoProgressColors? colors,
     this.allowScrubbing,
     this.padding = const EdgeInsets.only(top: 5.0),
   }) : colors = colors ?? VideoProgressColors();
 
   final VideoPlayerController controller;
   final VideoProgressColors colors;
-  final bool allowScrubbing;
+  final bool? allowScrubbing;
   final EdgeInsets padding;
 
   @override
@@ -634,7 +634,7 @@ class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
     };
   }
 
-  VoidCallback listener;
+  late VoidCallback listener;
 
   VideoPlayerController get controller => widget.controller;
 
@@ -656,11 +656,11 @@ class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
   Widget build(BuildContext context) {
     Widget progressIndicator;
     if (controller.value.initialized) {
-      final int duration = controller.value.duration.inMilliseconds;
-      final int position = controller.value.position.inMilliseconds;
+      final int duration = controller.value.duration!.inMilliseconds;
+      final int position = controller.value.position!.inMilliseconds;
 
       int maxBuffering = 0;
-      for (DurationRange range in controller.value.buffered) {
+      for (DurationRange range in controller.value.buffered!) {
         final int end = range.end.inMilliseconds;
         if (end > maxBuffering) {
           maxBuffering = end;
@@ -693,7 +693,7 @@ class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
       padding: widget.padding,
       child: progressIndicator,
     );
-    if (widget.allowScrubbing) {
+    if (widget.allowScrubbing!) {
       return _VideoScrubber(
         child: paddedProgressIndicator,
         controller: controller,
@@ -732,7 +732,7 @@ class YoutubePlayer extends StatefulWidget {
   /// Note: The player automatically adapts height using [aspectRatio] and [width].
   ///
   /// Default = Screen's width
-  final double width;
+  final double? width;
 
   /// Defines whether to auto play video or not.
   ///
@@ -745,7 +745,7 @@ class YoutubePlayer extends StatefulWidget {
   final bool isLive;
 
   /// Sets color of controls like play, pause, etc.
-  final ControlsColor controlsColor;
+  final ControlsColor? controlsColor;
 
   /// Sets video-wide overlay when controls are active
   final bool controlsActiveBackgroundOverlay;
@@ -756,7 +756,7 @@ class YoutubePlayer extends StatefulWidget {
   final Duration controlsTimeOut;
 
   /// Sets the starting position of the video.
-  final Duration startAt;
+  final Duration? startAt;
 
   /// Shows thumbnail when video is initializing.
   ///
@@ -779,13 +779,13 @@ class YoutubePlayer extends StatefulWidget {
   final bool startFullScreen;
 
   /// Returns [VideoPlayerController] after successfully initializing video.
-  final YPCallBack callbackController;
+  final YPCallBack? callbackController;
 
   /// Returns error if any found.
-  final ErrorCallback onError;
+  final ErrorCallback? onError;
 
   /// Callback which reports video end event.
-  final VoidCallback onVideoEnded;
+  final VoidCallback? onVideoEnded;
 
   /// Defines mode of the player.
   ///
@@ -813,9 +813,9 @@ class YoutubePlayer extends StatefulWidget {
   final bool loop;
 
   YoutubePlayer({
-    @required this.source,
-    @required this.context,
-    @required this.quality,
+    required this.source,
+    required this.context,
+    required this.quality,
     this.aspectRatio = 16 / 9,
     this.width,
     this.isLive = false,
@@ -860,15 +860,15 @@ class YoutubePlayer extends StatefulWidget {
 
 class _YoutubePlayerState extends State<YoutubePlayer>
     with WidgetsBindingObserver {
-  VideoPlayerController _videoController;
+  late VideoPlayerController _videoController;
   String videoId = "";
   bool initialize = true;
-  double width;
-  double height;
-  bool _showControls;
-  String _selectedQuality;
+  double? width;
+  double? height;
+  late bool _showControls;
+  late String _selectedQuality;
   bool _showVideoProgressBar = true;
-  ControlsColor controlsColor;
+  ControlsColor? controlsColor;
 
   bool _isFullScreen = false;
   bool _triggeredByUser = false;
@@ -880,11 +880,11 @@ class _YoutubePlayerState extends State<YoutubePlayer>
     _selectedQuality = qualityMapping(widget.quality);
     _showControls = widget.autoPlay ? false : true;
     if (widget.source.contains("http")) {
-      videoId = getIdFromUrl(widget.source);
+      videoId = getIdFromUrl(widget.source)!;
     } else {
       videoId = widget.source;
     }
-    if (videoId != null)
+    if (videoId.length > 4)
       _videoController = VideoPlayerController.network(
           "${videoId}sarbagya${_selectedQuality}sarbagya${widget.isLive}");
     if (controlsColor == null) {
@@ -892,32 +892,32 @@ class _YoutubePlayerState extends State<YoutubePlayer>
     } else {
       if (widget.controlsActiveBackgroundOverlay)
         controlsColor = ControlsColor(
-          buttonColor: widget.controlsColor.buttonColor,
+          buttonColor: widget.controlsColor!.buttonColor,
           controlsBackgroundColor: Colors.transparent,
-          playPauseColor: widget.controlsColor.playPauseColor,
-          progressBarPlayedColor: widget.controlsColor.progressBarPlayedColor,
+          playPauseColor: widget.controlsColor!.playPauseColor,
+          progressBarPlayedColor: widget.controlsColor!.progressBarPlayedColor,
           progressBarBackgroundColor:
-              widget.controlsColor.progressBarBackgroundColor,
-          seekBarPlayedColor: widget.controlsColor.seekBarPlayedColor,
-          seekBarUnPlayedColor: widget.controlsColor.seekBarUnPlayedColor,
-          timerColor: widget.controlsColor.timerColor,
+              widget.controlsColor!.progressBarBackgroundColor,
+          seekBarPlayedColor: widget.controlsColor!.seekBarPlayedColor,
+          seekBarUnPlayedColor: widget.controlsColor!.seekBarUnPlayedColor,
+          timerColor: widget.controlsColor!.timerColor,
         );
     }
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void dispose() {
-    _videoController?.dispose();
-    WidgetsBinding.instance.removeObserver(this);
+    _videoController.dispose();
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 
   @override
   void didChangeMetrics() {
     if (widget.reactToOrientationChange) {
-      double w = WidgetsBinding.instance.window.physicalSize.width;
-      double h = WidgetsBinding.instance.window.physicalSize.height;
+      double w = WidgetsBinding.instance!.window.physicalSize.width;
+      double h = WidgetsBinding.instance!.window.physicalSize.height;
       // Switched to LandScape Mode
       if (w > h && !_isFullScreen) {
         _pushFullScreenWidget(context, false);
@@ -940,12 +940,12 @@ class _YoutubePlayerState extends State<YoutubePlayer>
         if (widget.startFullScreen) {
           _pushFullScreenWidget(context);
         }
-        if (widget.startAt != null) _videoController.seekTo(widget.startAt);
+        if (widget.startAt != null) _videoController.seekTo(widget.startAt!);
         _videoController.addListener(listener);
       },
     );
     if (widget.callbackController != null) {
-      widget.callbackController(_videoController);
+      widget.callbackController!(_videoController);
     }
     print("Youtube Video Id: $videoId");
   }
@@ -953,7 +953,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
   listener() {
     if (_videoController.value.position == _videoController.value.duration &&
         !_videoEndedCalled) {
-      widget.onVideoEnded();
+      widget.onVideoEnded!();
       if (widget.loop) {
         _videoController.seekTo(
           Duration(seconds: 0),
@@ -971,35 +971,35 @@ class _YoutubePlayerState extends State<YoutubePlayer>
       YoutubePlayer.keepOn(true);
     }
     width = widget.width ?? MediaQuery.of(context).size.width;
-    height = 1 / widget.aspectRatio * width;
+    height = 1 / widget.aspectRatio * width!;
     if (widget.source.contains("http")) {
       if (getIdFromUrl(widget.source) != videoId) {
         _videoController.pause();
-        videoId = getIdFromUrl(widget.source);
-        if (videoId != null) {
+        videoId = getIdFromUrl(widget.source)!;
+        if (videoId.length > 1) {
           _videoController = VideoPlayerController.network(
               "${videoId}sarbagya${_selectedQuality}sarbagya${widget.isLive}");
           initializeYTController();
         } else {
-          widget.onError("Malformed Video ID or URL");
+          widget.onError!("Malformed Video ID or URL");
         }
       }
     } else {
       if (widget.source != videoId) {
         _videoController.pause();
         videoId = widget.source;
-        if (videoId != null) {
+        if (videoId.length > 4) {
           _videoController = VideoPlayerController.network(
               "${videoId}sarbagya${_selectedQuality}sarbagya${widget.isLive}");
           initializeYTController();
         }
       }
     }
-    if (initialize && videoId != null) {
+    if (initialize && videoId.length > 1) {
       initializeYTController();
       initialize = false;
     }
-    return _buildVideo(height, width, false);
+    return _buildVideo(height!, width!, false);
   }
 
   Widget _buildVideo(double _height, double _width, bool _isFullScreen) {
@@ -1017,7 +1017,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
               duration: Duration(seconds: 1),
               height: _height,
               width: _width,
-              decoration: widget.showThumbnail && videoId != null
+              decoration: widget.showThumbnail && videoId.length > 4
                   ? BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
@@ -1079,7 +1079,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
                         if (mounted) {
                           setState(() {
                             _selectedQuality = quality;
-                            if (videoId != null)
+                            if (videoId.length > 4)
                               _videoController = VideoPlayerController.network(
                                   "${videoId}sarbagya${_selectedQuality}sarbagya${widget.isLive}");
                           });
@@ -1092,7 +1092,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
                           }
                         });
                         if (widget.callbackController != null) {
-                          widget.callbackController(_videoController);
+                          widget.callbackController!(_videoController);
                         }
                       },
                       fullScreenCallback: () async {
@@ -1115,8 +1115,8 @@ class _YoutubePlayerState extends State<YoutubePlayer>
                         allowScrubbing: true,
                         colors: VideoProgressColors(
                           backgroundColor:
-                              controlsColor.progressBarBackgroundColor,
-                          playedColor: controlsColor.progressBarPlayedColor,
+                              controlsColor!.progressBarBackgroundColor,
+                          playedColor: controlsColor!.progressBarPlayedColor,
                         ),
                         padding: EdgeInsets.all(0.0),
                       ),
@@ -1148,14 +1148,14 @@ class _YoutubePlayerState extends State<YoutubePlayer>
     }
   }
 
-  String getIdFromUrl(String url, [bool trimWhitespaces = true]) {
+  String? getIdFromUrl(String? url, [bool trimWhitespaces = true]) {
     if (url == null || url.length == 0) return null;
 
     if (trimWhitespaces) url = url.trim();
 
     for (var exp in _regexps) {
-      Match match = exp.firstMatch(url);
-      if (match != null && match.groupCount >= 1) return match.group(1);
+      Match? match = exp.firstMatch(url);
+      if (match != null && match.groupCount >= 1) return match.group(1)!;
     }
 
     return null;
@@ -1172,7 +1172,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
   Future<dynamic> _pushFullScreenWidget(BuildContext context,
       [bool triggeredByUser = true]) async {
     final TransitionRoute<Null> route = PageRouteBuilder<Null>(
-      settings: RouteSettings(isInitialRoute: false),
+      // settings: RouteSettings(isInitialRoute: false),
       pageBuilder: _fullScreenRoutePageBuilder,
     );
 
@@ -1210,7 +1210,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
   ) {
     return AnimatedBuilder(
       animation: animation,
-      builder: (BuildContext context, Widget child) {
+      builder: (BuildContext context, Widget? child) {
         return Scaffold(
           body: _buildVideo(MediaQuery.of(context).size.height,
               MediaQuery.of(context).size.width, true),
