@@ -19,7 +19,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.2'
+        classpath 'com.android.tools.build:gradle:3.3.1'
     }
 }
 
@@ -50,8 +50,8 @@ android {
         }
     }
     dependencies {
-        implementation 'com.google.android.exoplayer:exoplayer-core:2.9.6'
-        implementation 'com.google.android.exoplayer:exoplayer-hls:2.9.6'
+        implementation 'com.google.android.exoplayer:exoplayer-core:2.14.1'
+        implementation 'com.google.android.exoplayer:exoplayer-hls:2.14.1'
         implementation 'com.github.sarbagyastha:android-youtubeExtractor:v2.3.0'
     }
 }

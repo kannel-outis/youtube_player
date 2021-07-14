@@ -39,7 +39,6 @@ import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.media.AudioManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -51,15 +50,14 @@ import android.view.WindowManager;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.*;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioAttributes;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.MergingMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
@@ -108,7 +106,7 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
 
         private final TextureRegistry.SurfaceTextureEntry textureEntry;
 
-        private QueuingEventSink eventSink = new QueuingEventSink();
+        private final QueuingEventSink eventSink = new QueuingEventSink();
 
         private final EventChannel eventChannel;
 
@@ -132,8 +130,7 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
 
         @SuppressLint("StaticFieldLeak")
         private void loadStreamLinks(Context context, String url, String quality, Result result){
-            TrackSelector trackSelector = new DefaultTrackSelector();
-            exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+            exoPlayer = new SimpleExoPlayer.Builder(context).build();
             new YouTubeExtractor(context) {
                 @Override
                 public void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta vMeta) {
@@ -323,12 +320,10 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
                 return new HlsMediaSource.Factory(mediaDataSourceFactory).createMediaSource(vuri);
             } else if (type == C.TYPE_OTHER) {
                 Log.i(TAG, "Media Type: GENERAL");
-                ExtractorMediaSource vESource = new ExtractorMediaSource.Factory(mediaDataSourceFactory)
-                        .setExtractorsFactory(new DefaultExtractorsFactory())
-                        .createMediaSource(vuri);
-                ExtractorMediaSource aESource = new ExtractorMediaSource.Factory(mediaDataSourceFactory)
-                        .setExtractorsFactory(new DefaultExtractorsFactory())
-                        .createMediaSource(auri);
+                ProgressiveMediaSource vESource = new ProgressiveMediaSource.Factory(mediaDataSourceFactory)
+                        .createMediaSource(MediaItem.fromUri(vuri));
+                ProgressiveMediaSource aESource = new ProgressiveMediaSource.Factory(mediaDataSourceFactory)
+                        .createMediaSource(MediaItem.fromUri(auri));
                 return new MergingMediaSource(vESource, aESource);
             } else {
                 throw new IllegalStateException("Unsupported type: " + type);
@@ -392,7 +387,8 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
                 Uri uri = Uri.parse(server_response);
                 if(server_response.contains("https")){
                     TrackSelector trackSelector = new DefaultTrackSelector();
-                    exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+//                    exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+                   exoPlayer =  new SimpleExoPlayer.Builder(context).build();
                     MediaSource mediaSource = buildMediaSource(uri, uri, dataSourceFactory);
                     exoPlayer.prepare(mediaSource);
                     setupYoutubePlayer(eventChannel, textureEntry, result);
@@ -447,11 +443,11 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
             setAudioAttributes(exoPlayer);
 
             exoPlayer.addListener(
-                    new DefaultEventListener() {
+                    new Listener() {
 
                         @Override
                         public void onPlayerStateChanged(final boolean playWhenReady, final int playbackState) {
-                            super.onPlayerStateChanged(playWhenReady, playbackState);
+
                             if (playbackState == Player.STATE_BUFFERING) {
                                 Map<String, Object> event = new HashMap<>();
                                 event.put("event", "bufferingUpdate");
@@ -473,7 +469,7 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
 
                         @Override
                         public void onPlayerError(final ExoPlaybackException error) {
-                            super.onPlayerError(error);
+
                             if (eventSink != null) {
                                 eventSink.error("VideoError", "Youtube player had error " + error, null);
                             }
@@ -489,9 +485,7 @@ public class YoutubePlayerPlugin implements MethodCallHandler {
         private static void setAudioAttributes(SimpleExoPlayer exoPlayer) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 exoPlayer.setAudioAttributes(
-                        new AudioAttributes.Builder().setContentType(C.CONTENT_TYPE_MOVIE).build());
-            } else {
-                exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
+                        new AudioAttributes.Builder().setContentType(C.CONTENT_TYPE_MOVIE).build(), true);
             }
         }
 
